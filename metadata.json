@@ -1,7 +1,5 @@
 {
   "name": "Calendar",
   "description": "Interactive Calendar",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }

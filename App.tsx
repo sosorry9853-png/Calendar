@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { CalendarProvider, useCalendar } from './contexts/CalendarContext';
 import { CalendarGrid } from './components/CalendarGrid';
 import { EventDetails } from './components/EventDetails';
-import { VoiceInterface } from './components/VoiceInterface';
 import { EventModal } from './components/EventModal';
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Search } from 'lucide-react';
 import { format, addMonths, subMonths } from 'date-fns';
@@ -25,7 +24,7 @@ const MainLayout: React.FC = () => {
                     <CalendarIcon className="text-white w-6 h-6" />
                 </div>
                 <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                    Lumina
+                    Calendar
                 </h1>
             </div>
 
@@ -74,7 +73,6 @@ const MainLayout: React.FC = () => {
       <main className="flex-1 p-6 overflow-hidden relative">
          <CalendarGrid />
          <EventDetails />
-         <VoiceInterface />
          <EventModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </main>
     </div>
