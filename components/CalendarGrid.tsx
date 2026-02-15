@@ -14,7 +14,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCalendar } from '../contexts/CalendarContext';
 import clsx from 'clsx';
 
-export const CalendarGrid: React.FC = () => {
+interface CalendarGridProps {
+  onDateClick: (date: Date) => void;
+}
+
+export const CalendarGrid: React.FC<CalendarGridProps> = ({ onDateClick }) => {
   const { currentDate, events, setSelectedEvent } = useCalendar();
 
   const monthStart = startOfMonth(currentDate);
@@ -22,32 +26,29 @@ export const CalendarGrid: React.FC = () => {
   const startDate = startOfWeek(monthStart);
   const endDate = endOfWeek(monthEnd);
 
-  // Generate days. ensure we cover the full grid.
   const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Animation variants
+  // Staggered animation for grid cells
   const containerVariants = {
-    hidden: { opacity: 0, scale: 0.98 },
+    hidden: { opacity: 0 },
     visible: { 
-      opacity: 1, 
-      scale: 1,
+      opacity: 1,
       transition: { 
-        duration: 0.4,
-        ease: "easeOut",
-        staggerChildren: 0.02 
+        staggerChildren: 0.02,
+        delayChildren: 0.05
       } 
     },
-    exit: { 
-      opacity: 0, 
-      scale: 0.98, 
-      transition: { duration: 0.2 } 
-    }
+    exit: { opacity: 0, transition: { duration: 0.1 } }
   };
 
   const dayVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 }
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      transition: { type: "spring", stiffness: 400, damping: 30 }
+    }
   };
 
   const getDayEvents = (date: Date) => {
@@ -56,11 +57,11 @@ export const CalendarGrid: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl relative">
+    <div className="flex-1 flex flex-col h-full bg-slate-900/40 backdrop-blur-2xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl relative ring-1 ring-white/5">
       {/* Weekday Header */}
-      <div className="grid grid-cols-7 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm z-10 flex-shrink-0">
+      <div className="grid grid-cols-7 border-b border-white/5 bg-slate-900/60 z-10 flex-shrink-0">
         {weekDays.map(day => (
-          <div key={day} className="py-4 text-center text-sm font-semibold text-slate-400 tracking-wide uppercase">
+          <div key={day} className="py-4 text-center text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">
             {day}
           </div>
         ))}
@@ -86,48 +87,52 @@ export const CalendarGrid: React.FC = () => {
                 <motion.div
                   key={day.toString()}
                   variants={dayVariants}
+                  onClick={() => onDateClick(day)}
+                  whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.03)" }}
                   className={clsx(
-                    "relative border-b border-r border-slate-800/50 p-2 transition-all hover:bg-slate-800/30 group flex flex-col gap-1 min-h-0",
-                    !isCurrentMonth && "bg-slate-900/30 text-slate-600",
-                    isCurrentMonth && "text-slate-200"
+                    "relative border-b border-r border-white/5 p-2 transition-colors cursor-pointer group flex flex-col gap-1.5 min-h-0",
+                    !isCurrentMonth && "bg-slate-950/40 opacity-50 text-slate-600",
+                    isCurrentMonth && "text-slate-300"
                   )}
-                  onClick={() => {
-                      // Optional interaction
-                  }}
                 >
-                  <div className="flex justify-between items-center mb-1 shrink-0">
+                  <div className="flex justify-between items-start shrink-0 px-1">
                     <span className={clsx(
-                      "text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full transition-all",
-                      isDayToday ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50 scale-110" : "text-slate-400"
+                      "text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-300",
+                      isDayToday 
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/40 scale-105" 
+                        : "group-hover:text-white"
                     )}>
                       {format(day, 'd')}
                     </span>
                     {dayEvents.length > 0 && (
-                        <span className="text-[10px] text-slate-500 font-medium hidden lg:block bg-slate-800/50 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[10px] text-blue-200 font-medium bg-blue-500/20 px-1.5 py-0.5 rounded-full border border-blue-500/30">
                             {dayEvents.length}
                         </span>
                     )}
                   </div>
                   
-                  <div className="flex-1 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
+                  <div className="flex-1 flex flex-col gap-1 overflow-y-auto custom-scrollbar px-1 pb-1">
                     {dayEvents.map(event => (
-                      <button
+                      <motion.button
+                        layoutId={event.id}
                         key={event.id}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedEvent(event);
                         }}
                         className={clsx(
-                          "w-full text-left px-2 py-1.5 rounded-md text-xs font-medium truncate transition-all transform hover:scale-[1.02] hover:shadow-lg hover:brightness-110",
+                          "w-full text-left px-2 py-1.5 rounded-lg text-xs font-medium truncate transition-all duration-200",
                           event.color,
-                          "text-white/95 shadow-sm"
+                          "hover:brightness-110 hover:translate-x-1 hover:shadow-lg text-white shadow-sm ring-1 ring-black/5"
                         )}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                         <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-white/80 shadow-sm flex-shrink-0" />
-                            <span className="truncate">{event.title}</span>
+                         <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/90 flex-shrink-0 shadow-sm" />
+                            <span className="truncate opacity-95">{event.title}</span>
                          </div>
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </motion.div>
